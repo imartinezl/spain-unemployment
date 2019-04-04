@@ -79,16 +79,23 @@ a <- merge(unemploy_data, pobpro_data, by.x = Codigo.Municipio, by.y=)
 
 # PARO POR PROVINCIA ----------------------------------------------------------------
 
+
+
+year_ <- 2018
 poblacion_activa <- c("25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64")
-b <- pxR::read.px('./00000001.px')$DATA$value %>% 
+url_template <- 'http://www.ine.es/pcaxisdl/t20/e245/p05/a{year}/l0/00000001.px'
+url <- gsub('{year}', year_,url_template, fixed = T)
+
+url <- '/home/imartinez/Downloads/00000001_2012.px'
+pxR::read.px(url)$DATA$value %>% head
+b <- pxR::read.px(url)$DATA$value %>% 
   dplyr::filter(sexo == "Ambos sexos",
                 edad..grupos.quinquenales. %in% poblacion_activa,
-                municipios != "Total") %>% 
+                municipios != "Total",
+                year = year_) %>% 
   dplyr::group_by(municipios) %>% 
   dplyr::summarise(pob = sum(value)) %>% 
   dplyr::ungroup() %>% 
   dplyr::mutate(cod_mun = stringr::str_sub(municipios,1,5) %>% as.numeric,
                 municipios = stringr::str_sub(municipios,7) )
-
-
 
