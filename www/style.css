@@ -1,14 +1,40 @@
 body, html {
 background-color: #090f28;
-background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23e8eeff' fill-opacity='0.4' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E");
+/*background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23e8eeff' fill-opacity='0.4' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E");*/
+margin-top: 10px;
+margin-bottom: 50px;
+margin-left: 20px;
+margin-right: 20px;
 
 }
 
-h1, h2, h3, h4, h5, h6, label, th, p, td {
+h1, h2, h3, h4, h5, h6, label, p, td {
   color: #e8eeff;
+}
+.datepicker-switch, .prev, .next, .month{
+ color: #444444;
 }
 
 #plot_paro_provincia{
   margin-top: 10pt;
   margin-bottom: 10pt;
+}
+#minPob-selectized{
+  height: 32px;
+}
+.item{
+  padding-top: 6px;
+  padding-bottom: 6px
+}
+#download{
+  margin-top: 25px;
+  height: 46px;
+}
+#leftColumn{
+  /*height: 950px;
+  display: flex;
+  justify-content: flex-end;
+  flex-direction: column;*/
+  float: right;
+  margin-top: 12px;
 }
