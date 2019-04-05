@@ -31,7 +31,7 @@ ui <- shiny::fluidPage(
     )
   ),
   shiny::fluidRow(
-    DT::DTOutput('tbl', width = "500px")
+    shiny::tableOutput('tbl')
   )
 )
 
@@ -55,14 +55,14 @@ server <- function(input, output) {
       dplyr::mutate(tasa_paro_media = mean(tasa_paro), 
                     tasa_paro_max = max(tasa_paro)) %>% 
       dplyr::ungroup()
-    output$tbl <- DT::renderDT(
-      values$unemployment_rate_data %>% 
+    output$tbl <- shiny::renderTable(
+      {values$unemployment_rate_data %>% 
         dplyr::select(Provincia, Municipio, Comunidad.Autónoma, poblacion, poblacion_activa, total.Paro.Registrado, tasa_paro) %>% 
         dplyr::rename(Paro.Registrado = total.Paro.Registrado,
                       Poblacion_Total = poblacion,
                       Poblacion_Activa = poblacion_activa,
                       Tasa_Desempleo = tasa_paro)
-      , options = list(pageLength = 5)
+      }, width = '500px', rownames=F
     )
     output$plot_paro_provincia <- plotly::renderPlotly({
       plot.unemployment(new_data, values$year_, values$month_)
