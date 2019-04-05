@@ -21,9 +21,14 @@ ui <- shiny::fluidPage(
                   shiny::tags$p('Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'),
                   dateInput2("date", label="Fecha", value = max_date, min = min_date, max = max_date, width = "150px",
                              format = "MM-yyyy", startview = "month", endview = "year", weekstart = 1, language = "es"),
-                  shiny::selectInput("minPob", "Población Minima", choices = c(0,100,1000,10000,40000), selected=1000, width = "150px")
+                  shiny::selectInput("minPob", "Población Minima", choices = c(0,100,1000,10000,40000), selected=1000, width = "150px"),
                   # shiny::selectInput("maxPob", "Población Maxima", choices = c(0,100,1000,10000,40000,500000,2000000), selected=2000000),
                   # shiny::sliderInput("slider", label = h3("Slider Range"), min = 0, max = 2000000, value = c(0, 2000000))
+                  tags$div(sliderInput("slide1", "Slider1", min = 0, max=10, value=4),  style="display:inline-block"),
+                  tags$div(sliderInput("slide1=2", "Slider2", min = 0, max=10, value=4),  style="display:inline-block"),
+                  tags$div(sliderInput("slide3", "Slider3", min = 0, max=10, value=4),  style="display:inline-block"),
+                  downloadButton("download", label = "Descargar Datos")
+                  
     ),
     
     shiny::column(8,
@@ -32,7 +37,8 @@ ui <- shiny::fluidPage(
   ),
   shiny::fluidRow(
     shiny::tableOutput('tbl')
-  )
+  ),
+  shiny::HTML('<iframe width="100%" height="520" frameborder="0" src="https://imartinezl.carto.com/builder/e60b7971-76ba-472f-a444-9410380f315e/embed" allowfullscreen webkitallowfullscreen mozallowfullscreen oallowfullscreen msallowfullscreen></iframe>')
 )
 
 server <- function(input, output) {
@@ -57,11 +63,13 @@ server <- function(input, output) {
       dplyr::ungroup()
     output$tbl <- shiny::renderTable(
       {values$unemployment_rate_data %>% 
-        dplyr::select(Provincia, Municipio, Comunidad.Autónoma, poblacion, poblacion_activa, total.Paro.Registrado, tasa_paro) %>% 
-        dplyr::rename(Paro.Registrado = total.Paro.Registrado,
-                      Poblacion_Total = poblacion,
-                      Poblacion_Activa = poblacion_activa,
-                      Tasa_Desempleo = tasa_paro)
+          dplyr::select(Provincia, Municipio, Comunidad.Autónoma, poblacion, poblacion_activa, total.Paro.Registrado, tasa_paro) %>% 
+          dplyr::rename(Paro.Registrado = total.Paro.Registrado,
+                        Poblacion_Total = poblacion,
+                        Poblacion_Activa = poblacion_activa,
+                        Tasa_Desempleo = tasa_paro) %>% 
+          dplyr::arrange(Tasa_Desempleo) %>% 
+          dplyr::top_n(5)
       }, width = '500px', rownames=F
     )
     output$plot_paro_provincia <- plotly::renderPlotly({
