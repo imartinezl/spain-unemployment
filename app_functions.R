@@ -42,8 +42,8 @@ unemployment.data <- function(year_, month_, unemployment_dists){
     dplyr::filter(month == month_)
 }
 
-unemployment_dists <- unemployment.dists()
-unemployment_years <- unemployment_dists %>% dplyr::pull(year)
+# unemployment_dists <- unemployment.dists()
+# unemployment_years <- unemployment_dists %>% dplyr::pull(year)
 # month_ <- 1
 # year_ <- 2019
 # unemployment_data <- unemployment.data(year_, month_, unemployment_dists)
@@ -74,27 +74,28 @@ unemployment.rate.data <- function(unemployment_data, year_){
   unemployment_rate_data <- merge(merge(poblacion_total, poblacion_activa), unemployment_data, by.x = "cod_mun", by.y = "Codigo.Municipio") %>% 
     dplyr::mutate(tasa_paro = total.Paro.Registrado/poblacion_activa*100)
 }
-plot.unemployment <- function(unemployment_rate_data, year_, month_){
-  tasa_paro_maxima <- unemployment_rate_data$tasa_paro %>% max()
+plot.unemployment <- function(unemployment_data, year_, month_){
+  # unemployment_data$Tasa_Desempleo <- unemployment_data$Tasa_Desempleo/100
+  tasa_paro_maxima <- unemployment_data$Tasa_Desempleo %>% max()
   month_name <- lubridate::dmy(paste('1',month_,year_)) %>% lubridate::month(label = T, abbr = F)
   
-  provincias <- unemployment_rate_data %>% 
-    dplyr::select(Provincia, tasa_paro_max, tasa_paro_media) %>% 
+  provincias <- unemployment_data %>% 
+    dplyr::select(Provincia, Tasa_Desempleo_Max, Tasa_Desempleo_Media) %>% 
     unique()
   
-  provincia_top <- unemployment_rate_data %>%
-    dplyr::slice(which.min(unemployment_rate_data$tasa_paro_media)) %>% 
+  provincia_top <- unemployment_data %>%
+    dplyr::slice(which.min(unemployment_data$Tasa_Desempleo_Media)) %>% 
     dplyr::pull(Provincia)
-  municipio_min <- unemployment_rate_data %>%
+  municipio_min <- unemployment_data %>%
     dplyr::filter(Provincia == provincia_top) %>% 
-    dplyr::mutate(tasa_paro_min = min(tasa_paro)) %>%
-    dplyr::filter(tasa_paro == tasa_paro_min) %>% 
+    dplyr::mutate(Tasa_Desempleo_Minima = min(Tasa_Desempleo)) %>%
+    dplyr::filter(Tasa_Desempleo == Tasa_Desempleo_Minima) %>% 
     dplyr::mutate(texto = paste0("Municipio con la <i>menor</i><br>tasa de paro en ", provincia_top)) %>% 
     dplyr::slice(1)
-  municipio_max <- unemployment_rate_data %>%
+  municipio_max <- unemployment_data %>%
     dplyr::filter(Provincia == provincia_top) %>% 
-    dplyr::mutate(tasa_paro_max = max(tasa_paro)) %>%
-    dplyr::filter(tasa_paro == tasa_paro_max) %>% 
+    dplyr::mutate(Tasa_Desempleo_Maxima = max(Tasa_Desempleo)) %>%
+    dplyr::filter(Tasa_Desempleo == Tasa_Desempleo_Maxima) %>% 
     dplyr::mutate(texto = paste0("Municipio con la <i>mayor</i><br>tasa de paro en ", provincia_top)) %>% 
     dplyr::slice(1)
   
@@ -111,7 +112,7 @@ plot.unemployment <- function(unemployment_rate_data, year_, month_){
     title='Tasa de Desempleo (%)', titlefont=list(color=text_color,familiy=font_family,size=17),
     zeroline = F, position=0, range=c(-4,tasa_paro_maxima+5),
     tickfont = list(color = text_color,family=font_family,size=14),
-    ticks='outside', tick0=0, dtick=5,
+    ticks='outside', tick0=0, dtick=5, ticksuffix='%',
     ticklen=4, tickwidth=1, tickcolor=tick_color,
     gridcolor=grid_color, gridwidth=0.25,
     linecolor=line_color, linewidth=2
@@ -119,9 +120,9 @@ plot.unemployment <- function(unemployment_rate_data, year_, month_){
   xaxis2 <- list(
     title='Tasa de Desempleo (%)', titlefont=list(color=text_color,familiy=font_family,size=17),
     zeroline = F, position=1, range=c(-4,tasa_paro_maxima+5),
-    overlaying = "x", side = "top",
+    overlaying = "x", side = "top", 
     tickfont = list(color = text_color,family=font_family,size=14),
-    ticks='outside', tick0=0, dtick=5,
+    ticks='outside', tick0=0, dtick=5, ticksuffix='%',
     ticklen=4, tickwidth=1, tickcolor=tick_color,
     gridcolor=grid_color, gridwidth=0.25,
     linecolor=line_color, linewidth=2
@@ -132,26 +133,26 @@ plot.unemployment <- function(unemployment_rate_data, year_, month_){
     gridcolor=grid_color, gridwidth=0.25
   )
   
-  
-  unemployment_rate_data %>% 
+  print(provincias)
+  unemployment_data %>% 
     plotly::plot_ly(type = "scatter", mode="markers", name = 'Tasa de Desempleo', #width = 1200, height = 1080, 
-                    x = ~tasa_paro, y = ~reorder(Provincia, -tasa_paro_media),
-                    marker=list(color=~tasa_paro, colorbar=F, colorscale= gradient_colors, reversescale =T),
-                    text = ~paste(Municipio, ' ', round(tasa_paro,2), '%'), hoverinfo = 'text' ) %>%
-    plotly::add_trace(data = provincias, x = ~tasa_paro_media, name = 'Tasa de Desempleo Media', mode = 'markers',
+                    x = ~Tasa_Desempleo, y = ~reorder(Provincia, -Tasa_Desempleo_Media),
+                    marker=list(color=~Tasa_Desempleo, colorbar=F, colorscale=gradient_colors, reversescale =T),
+                    text = ~paste(Municipio, ' ', round(Tasa_Desempleo,2), '%'), hoverinfo = 'text' ) %>%
+    plotly::add_trace(data = provincias, x = ~Tasa_Desempleo_Media, name = 'Tasa de Desempleo Media', mode = 'markers',
                       marker=list(color='#e8eeff', line = list(color = '#e8eeff',width = 0),size=10),
-                      text = ~paste(Provincia, ' ', round(tasa_paro_media,2), '%'), hoverinfo = 'text', xaxis = "x2") %>%
-    plotly::add_annotations(x = pmax(provincias$tasa_paro_media+8, provincias$tasa_paro_max+1),
-                            y=provincias$Provincia, text=provincias$Provincia,
+                      text = ~paste(Provincia, ' ', round(Tasa_Desempleo_Media,2), '%'), hoverinfo = 'text', xaxis = "x2") %>%
+    plotly::add_annotations(data = provincias, x = ~pmax(Tasa_Desempleo_Media+8, Tasa_Desempleo_Max+1),
+                            y=~Provincia, text=~Provincia,
                             xref='x', yref='y',showarrow=F,font=list(color=text_color,size=10),
                             xanchor="left",yanchor = "middle") %>%
-    plotly::add_annotations(x = municipio_min$tasa_paro, y=provincia_top, text=municipio_min$texto,
+    plotly::add_annotations(data = municipio_min, x = ~Tasa_Desempleo, y=provincia_top, text=~texto,
                             xref='x', yref='y',arrowhead=7,arrowsize=0.5,ax=-30,ay=-20,arrowwidth=1,arrowcolor="white",
                             xanchor="right",yanchor="bottom",font=list(color=text_color,size=10)) %>%
-    plotly::add_annotations(x = municipio_max$tasa_paro, y=provincia_top, text=municipio_max$texto,
+    plotly::add_annotations(data=municipio_max, x = ~Tasa_Desempleo, y=provincia_top, text=~texto,
                             xref='x', yref='y',arrowhead=7,arrowsize=0.5,ax=30,ay=-20,arrowwidth=1,arrowcolor="white",
                             xanchor="left",yanchor = "bottom",font=list(color=text_color,size=10)) %>%
-    plotly::add_annotations(x = municipio_max$tasa_paro_media, y=provincia_top, 
+    plotly::add_annotations(x = municipio_max$Tasa_Desempleo_Media, y=provincia_top,
                             text=paste0("Tasa <i>media</i> de desempleo <br>en ", provincia_top),
                             xref='x', yref='y',arrowhead=7,arrowsize=0.5,ax=0,ay=-40,
                             arrowwidth=1, arrowcolor="white", font=list(color=text_color,size=10)) %>%
