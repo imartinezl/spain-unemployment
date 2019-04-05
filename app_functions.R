@@ -179,18 +179,6 @@ read.unemployment.province <- function(province){
   unemployment_data <- data.table::fread(unemployment_filename, stringsAsFactors = F)
 }
 
-map <- rgdal::readOGR('~/Downloads/recintos_autonomicas_inspire_peninbal_etrs89/recintos_autonomicas_inspire_peninbal_etrs89.shp')
-leaflet::leaflet(map) %>%
-  leaflet::addTiles() %>%
-  leaflet::addPolygons(stroke = T, weight = 1, smoothFactor = 0.3, fillOpacity = 0.1, label=~NAMEUNIT)
-map <- rgdal::readOGR('~/Downloads/recintos_municipales_inspire_peninbal_etrs89/recintos_municipales_inspire_peninbal_etrs89.shp')
-leaflet::leaflet(map) %>%
-  # leaflet::addTiles() %>%
-  leaflet::addPolygons(stroke = T, weight = 1, fillOpacity = 0.1, label=~NAMEUNIT)
-
-library(mapview)
-mapview(breweries)
-
 dateInput2 <- function(inputId, label, endview = "years", ...) {
   d <- shiny::dateInput(inputId, label, ...)
   d$children[[2L]]$attribs[["data-date-min-view-mode"]] <- endview
