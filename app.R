@@ -8,7 +8,8 @@ setwd("~/Downloads/spain-unemployment")
 min_date <- '2011-01-01'
 max_date <- '2019-01-01'
 # today <- Sys.time() %>% as.Date()
-
+title <- "Observatorio del Desempleo en España"
+subtitle <- "Visualización de datos de desempleo por municipios en España"
 ui <- shiny::fluidPage(
   theme = shinythemes::shinytheme("sandstone"),
   shiny::tags$head(
@@ -16,66 +17,85 @@ ui <- shiny::fluidPage(
   ),
   # shiny::tags$hr(),
   shiny::fluidRow(
-    shiny::column(4,
-                  shiny::tags$h3("Observatorio del Desempleo en España"),
-                  shiny::tags$p('Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'),
-                  dateInput2("date", label="Fecha", value = max_date, min = min_date, max = max_date, width = "150px",
-                             format = "MM-yyyy", startview = "month", endview = "year", weekstart = 1, language = "es"),
-                  shiny::selectInput("minPob", "Población Minima", choices = c(0,100,1000,10000,40000), selected=1000, width = "150px"),
-                  # shiny::selectInput("maxPob", "Población Maxima", choices = c(0,100,1000,10000,40000,500000,2000000), selected=2000000),
-                  # shiny::sliderInput("slider", label = h3("Slider Range"), min = 0, max = 2000000, value = c(0, 2000000))
-                  tags$div(sliderInput("slide1", "Slider1", min = 0, max=10, value=4),  style="display:inline-block"),
-                  tags$div(sliderInput("slide1=2", "Slider2", min = 0, max=10, value=4),  style="display:inline-block"),
-                  tags$div(sliderInput("slide3", "Slider3", min = 0, max=10, value=4),  style="display:inline-block"),
-                  downloadButton("download", label = "Descargar Datos")
-                  
-    ),
+    shiny::column(5, id = "leftColumn",
+                  shiny::tags$h3(title),
+                  shiny::tags$p(subtitle),
+                  shiny::tags$hr(),
+                  shiny::fluidRow(
+                    shiny::column(3, dateInput2("date", label="Fecha", value = max_date, min = min_date, max = max_date, width = "150px",
+                                                format = "MM-yyyy", startview = "month", endview = "year", weekstart = 1, language = "es")),
+                    shiny::column(3, shiny::selectInput("minPob", "Habitantes", choices = c("> 0","> 100","> 1000","> 10000","> 40000"), selected="> 1000", width = "150px")),
+                    shiny::column(3, shiny::downloadButton("download", label = "Descargar Datos"))
+                  ),
+                  shiny::HTML('<iframe width="100%" height="630" frameborder="0" src="https://imartinezl.carto.com/builder/e60b7971-76ba-472f-a444-9410380f315e/embed" allowfullscreen webkitallowfullscreen mozallowfullscreen oallowfullscreen msallowfullscreen></iframe>')
+                  ),
     
-    shiny::column(8,
-                  plotly::plotlyOutput("plot_paro_provincia", width = "100%", height = "950px")
+    shiny::column(7,
+                  shinycssloaders::withSpinner(plotly::plotlyOutput("plot_paro_provincia", 
+                                                                    width = "100%", height = "950px"))
     )
   ),
   shiny::fluidRow(
-    shiny::tableOutput('tbl')
-  ),
-  shiny::HTML('<iframe width="100%" height="520" frameborder="0" src="https://imartinezl.carto.com/builder/e60b7971-76ba-472f-a444-9410380f315e/embed" allowfullscreen webkitallowfullscreen mozallowfullscreen oallowfullscreen msallowfullscreen></iframe>')
+    shiny::tableOutput('mayor_desempleo'),
+    shiny::tableOutput('menor_desempleo'),
+    DT::DTOutput('tbl')
+  )
 )
 
+unemployment_path <- './unemployment_data/'
 server <- function(input, output) {
   
   values <- shiny::reactiveValues()
   shiny::observeEvent(input$date, {
     values$year_ <- lubridate::ymd(input$date) %>% lubridate::year()
     values$month_ <- lubridate::ymd(input$date) %>% lubridate::month()
-    values$unemployment_rate_data <- unemployment.data(values$year_, values$month_, unemployment_dists) %>% 
-      unemployment.rate.data(values$year_) %>% 
-      dplyr::filter(tasa_paro < 50)
+    values$unemployment_filename <- paste0(unemployment_path,'/', paste(c("unemployment", values$year_ ,values$month_), collapse = "_" ), ".csv")
+    values$unemployment_data <- read.csv(values$unemployment_filename, stringsAsFactors = F) %>% 
+      dplyr::filter(Tasa_Desempleo < 50)
   })
   shiny::observeEvent({
-    values$unemployment_rate_data
+    values$unemployment_data
     input$minPob
   },{
-    new_data <- values$unemployment_rate_data  %>%
-      dplyr::filter(poblacion > as.numeric(input$minPob)) %>% 
+    new_data <- values$unemployment_data  %>%
+      dplyr::filter(Habitantes > as.numeric(stringr::str_sub(input$minPob, 3))) %>% 
       dplyr::group_by(Provincia) %>% 
-      dplyr::mutate(tasa_paro_media = mean(tasa_paro), 
-                    tasa_paro_max = max(tasa_paro)) %>% 
+      dplyr::mutate(Tasa_Desempleo_Media = mean(Tasa_Desempleo), 
+                    Tasa_Desempleo_Max = max(Tasa_Desempleo)) %>% 
       dplyr::ungroup()
-    output$tbl <- shiny::renderTable(
-      {values$unemployment_rate_data %>% 
-          dplyr::select(Provincia, Municipio, Comunidad.Autónoma, poblacion, poblacion_activa, total.Paro.Registrado, tasa_paro) %>% 
-          dplyr::rename(Paro.Registrado = total.Paro.Registrado,
-                        Poblacion_Total = poblacion,
-                        Poblacion_Activa = poblacion_activa,
-                        Tasa_Desempleo = tasa_paro) %>% 
-          dplyr::arrange(Tasa_Desempleo) %>% 
-          dplyr::top_n(5)
-      }, width = '500px', rownames=F
+    output$mayor_desempleo <- shiny::renderTable(
+      {new_data %>% 
+          dplyr::select(Municipio, Provincia, Comunidad_Autonoma, Habitantes, Poblacion_Activa, Desempleados, Tasa_Desempleo) %>% 
+          dplyr::rename("Comunidad Autonoma" = Comunidad_Autonoma, "Poblacion Activa" = Poblacion_Activa) %>%
+          dplyr::top_n(5, wt = Tasa_Desempleo) %>% 
+          dplyr::arrange(-Tasa_Desempleo)
+      }, width = '300px', rownames=F, hover = T, spacing = 'xs', digits = 2, align = 'c'
+    )
+    output$menor_desempleo <- shiny::renderTable(
+      {new_data %>% 
+          dplyr::select(Municipio, Provincia, Comunidad_Autonoma, Habitantes, Poblacion_Activa, Desempleados, Tasa_Desempleo) %>% 
+          dplyr::rename("Comunidad Autonoma" = Comunidad_Autonoma, "Poblacion Activa" = Poblacion_Activa) %>% 
+          dplyr::top_n(5, wt = -Tasa_Desempleo) %>% 
+          dplyr::arrange(Tasa_Desempleo)
+      }, width = '300px', rownames=F, hover = T, spacing = 'xs', digits = 2, align = 'c'
     )
     output$plot_paro_provincia <- plotly::renderPlotly({
       plot.unemployment(new_data, values$year_, values$month_)
     })
+    output$tbl <- DT::renderDT({
+      new_data %>% 
+        dplyr::select(Municipio, Provincia, Comunidad_Autonoma, Habitantes, Poblacion_Activa, Desempleados, Tasa_Desempleo) %>% 
+        dplyr::rename("Comunidad Autonoma" = Comunidad_Autonoma, "Poblacion Activa" = Poblacion_Activa)
+    })
   })
+  output$download <- downloadHandler(
+    filename = function() {
+      values$unemployment_filename
+    },
+    content = function(file) {
+      write.csv(values$unemployment_data, file, row.names = FALSE)
+    }
+  )
 }
 
 # Run the application 
