@@ -1,5 +1,6 @@
 
 library(dplyr)
+setwd("~/Downloads/spain-unemployment")
 
 fetch_url <- function(url){
   h <- curl::new_handle()
@@ -32,27 +33,13 @@ unemployment.dists <- function(){
 }
 unemployment.data <- function(year_, month_, unemployment_dists){
   month_name <- lubridate::dmy(paste('1',month_,year_)) %>% lubridate::month(label = T, abbr = F)
-  
-  
-  unemployment_path <- './unemployment_data/'
-  unemployment_filename <- paste0(unemployment_path,'/', paste(c("unemployment", year_ ,month_), collapse = "_" ), ".csv")
-  if(!dir.exists(unemployment_path)){
-    dir.create(unemployment_path)
-  }
-  unemployment_files <- list.files(unemployment_path, full.names = T)
-  if(unemployment_filename %in% unemployment_files){
-    unemployment_data <- read.csv(unemployment_filename, stringsAsFactors = F)
-  }else{
-    unemployment_data <- unemployment_dists %>% 
-      dplyr::filter(year == year_) %>% 
-      dplyr::pull(accessURL) %>% 
-      read.csv(skip=1, header=T, sep=';',check.names = T, fileEncoding = "ISO-8859-1", stringsAsFactors = F) %>%
-      dplyr::mutate(month = Código.mes %% 100,
-                    year = floor(Código.mes/100)) %>% 
-      dplyr::filter(month == month_)
-    write.csv(unemployment_data, file = unemployment_filename, row.names = F)
-  }
-  unemployment_data
+  unemployment_data <- unemployment_dists %>% 
+    dplyr::filter(year == year_) %>% 
+    dplyr::pull(accessURL) %>% 
+    read.csv(skip=1, header=T, sep=';',check.names = T, fileEncoding = "ISO-8859-1", stringsAsFactors = F) %>%
+    dplyr::mutate(month = Código.mes %% 100,
+                  year = floor(Código.mes/100)) %>% 
+    dplyr::filter(month == month_)
 }
 
 unemployment_dists <- unemployment.dists()
@@ -180,6 +167,29 @@ plot.unemployment <- function(unemployment_rate_data, year_, month_){
 # unemployment.rate.data(unemployment_data, year_) %>%
 #   dplyr::filter(poblacion > 10000, poblacion<40000) %>%
 #   plot.unemployment(year_, month_)
+
+read.unemployment.time <- function(year_, month_){
+  unemployment_path <- './unemployment_data/'
+  unemployment_filename <- paste0(unemployment_path,'/', paste(c("unemployment", year_ ,month_), collapse = "_" ), ".csv")
+  unemployment_data <- data.table::fread(unemployment_filename, stringsAsFactors = F)
+}
+read.unemployment.province <- function(province){
+  unemployment_path <- './unemployment_data/'
+  unemployment_filename <- paste0(unemployment_path,'/', paste(c("unemployment", year_ ,month_), collapse = "_" ), ".csv")
+  unemployment_data <- data.table::fread(unemployment_filename, stringsAsFactors = F)
+}
+
+map <- rgdal::readOGR('~/Downloads/recintos_autonomicas_inspire_peninbal_etrs89/recintos_autonomicas_inspire_peninbal_etrs89.shp')
+leaflet::leaflet(map) %>%
+  leaflet::addTiles() %>%
+  leaflet::addPolygons(stroke = T, weight = 1, smoothFactor = 0.3, fillOpacity = 0.1, label=~NAMEUNIT)
+map <- rgdal::readOGR('~/Downloads/recintos_municipales_inspire_peninbal_etrs89/recintos_municipales_inspire_peninbal_etrs89.shp')
+leaflet::leaflet(map) %>%
+  # leaflet::addTiles() %>%
+  leaflet::addPolygons(stroke = T, weight = 1, fillOpacity = 0.1, label=~NAMEUNIT)
+
+library(mapview)
+mapview(breweries)
 
 dateInput2 <- function(inputId, label, endview = "years", ...) {
   d <- shiny::dateInput(inputId, label, ...)
