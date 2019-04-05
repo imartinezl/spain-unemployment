@@ -49,3 +49,25 @@ if(unemployment_filename %in% unemployment_files){
 }else{
   write.csv(unemployment_data, file = unemployment_filename, row.names = F)
 }
+
+
+
+# MAP DATASET -----------------------------------------------------------------------
+library(sf)
+map <- sf::st_read('lineas_limite/recintos_municipales_inspire_peninbal_etrs89/recintos_municipales_inspire_peninbal_etrs89.shp')
+plot(sf::st_geometry(map))
+map <- sf::st_read('~/Downloads/recintos_municipales_inspire_peninbal_etrs89/recintos_municipales_inspire_peninbal_etrs89.shp') %>% 
+  dplyr::mutate(Codigo_Municipio = NATCODE %>% as.character() %>% as.numeric() %% 1e5)
+plot(sf::st_geometry(map))
+# sf::write_sf(map)
+
+unemployment_data %>% colnames()
+columns <- c("Habitantes","Poblacion_Activa","Desempleados","Tasa_Desempleo")
+unemployment_data %>% 
+  dplyr::filter(year == 2019, month==1) %>% 
+  merge(map) %>% 
+  sf::st_write('~/Downloads/recintos_municipales_inspire_peninbal_etrs89/recintos_municipales_inspire_peninbal_etrs89_2.shp',
+               layer_options = "ENCODING=UTF-8")
+
+sf::st_read('~/Downloads/recintos_municipales_inspire_peninbal_etrs89/recintos_municipales_inspire_peninbal_etrs89_2.shp') %>% 
+  head()
