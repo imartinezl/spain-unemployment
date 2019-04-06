@@ -133,7 +133,6 @@ plot.unemployment <- function(unemployment_data, year_, month_){
     gridcolor=grid_color, gridwidth=0.25
   )
   
-  print(provincias)
   unemployment_data %>% 
     plotly::plot_ly(type = "scatter", mode="markers", name = 'Tasa de Desempleo', #width = 1200, height = 1080, 
                     x = ~Tasa_Desempleo, y = ~reorder(Provincia, -Tasa_Desempleo_Media),
@@ -191,3 +190,4 @@ dateRangeInput2 <- function(inputId, label, endview = "years", ...) {
   d$children[[2L]]$children[[3]]$attribs[["data-date-min-view-mode"]] <- endview
   d
 }
+

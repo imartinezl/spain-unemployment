@@ -1,12 +1,15 @@
 
 library(shiny)
 
-
-source('~/Downloads/spain-unemployment/app_functions.R')
 setwd("~/Downloads/spain-unemployment")
+source('~/Downloads/spain-unemployment/app_functions.R')
 
 min_date <- '2011-01-01'
 max_date <- '2019-01-01'
+unemployment_path <- './unemployment_data/'
+unemployment_filename <- paste0(unemployment_path,'/unemployment_data.csv')
+unemployment_data <- data.table::fread(unemployment_filename, stringsAsFactors = F)
+
 # today <- Sys.time() %>% as.Date()
 title <- "Observatorio del Desempleo en España"
 subtitle <- "Visualización de datos de desempleo por municipios en España"
@@ -44,11 +47,20 @@ ui <- shiny::fluidPage(
                   shiny::tags$h4("Top 5 Municipios con Menor Desempleo"),
                   shiny::tableOutput('menor_desempleo'))
   ),
-  rhandsontable::rHandsontableOutput("tabla"),
-  DT::DTOutput('tbl')
+  shiny::tags$hr(),
+  shiny::tags$h4("Evolucion Temporal del Desempleo"),
+  shiny::fluidRow( 
+    shiny::column(12,
+                  shiny::selectInput("ccaa", "Comunidad Autonoma", width = "150px",
+                                     unemployment_data$Comunidad_Autonoma %>% unique()),
+                  shiny::selectInput("prov", "Provincia", width = "150px",
+                                     unemployment_data$Provincia %>% unique()),
+                  shiny::selectInput("muni", "Municipio", width = "150px",
+                                     unemployment_data$Municipio %>% unique())
+    )
+  )
 )
 
-unemployment_path <- './unemployment_data/'
 server <- function(input, output) {
   
   values <- shiny::reactiveValues()
