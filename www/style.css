@@ -8,7 +8,7 @@ margin-right: 20px;
 
 }
 
-h1, h2, h3, h4, h5, h6, label, p, td {
+h1, h2, h3, h4, h5, h6, label, p {
   color: #e8eeff;
 }
 .datepicker-switch, .prev, .next, .month{
@@ -37,4 +37,12 @@ h1, h2, h3, h4, h5, h6, label, p, td {
   flex-direction: column;*/
   float: right;
   margin-top: 12px;
+}
+#mayor_desempleo, #menor_desempleo{
+  color: #e8eeff;
+  padding-right: 75pt;
+}
+.handsontable .htDimmed{
+  color: #444444;
+  text-align: center;
 }
