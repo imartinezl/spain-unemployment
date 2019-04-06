@@ -31,7 +31,7 @@ ui <- shiny::fluidPage(
                     shiny::column(3, shiny::downloadButton("download", label = "Descargar Datos"))
                   ),
                   shiny::HTML('<iframe width="100%" height="630" frameborder="0" src="https://imartinezl.carto.com/builder/e60b7971-76ba-472f-a444-9410380f315e/embed" allowfullscreen webkitallowfullscreen mozallowfullscreen oallowfullscreen msallowfullscreen></iframe>')
-                  ),
+    ),
     
     shiny::column(7,
                   shinycssloaders::withSpinner(plotly::plotlyOutput("plot_paro_provincia", 
@@ -51,12 +51,12 @@ ui <- shiny::fluidPage(
   shiny::tags$h4("Evolucion Temporal del Desempleo"),
   shiny::fluidRow( 
     shiny::column(12,
-                  shiny::selectInput("ccaa", "Comunidad Autonoma", width = "150px",
+                  shiny::selectInput("ccaa", "Comunidad Autonoma", width = "200px",
                                      unemployment_data$Comunidad_Autonoma %>% unique()),
-                  shiny::selectInput("prov", "Provincia", width = "150px",
-                                     unemployment_data$Provincia %>% unique()),
-                  shiny::selectInput("muni", "Municipio", width = "150px",
-                                     unemployment_data$Municipio %>% unique())
+                  shiny::uiOutput("provUI"),
+                  shiny::uiOutput("muniUI")
+                  
+                  
     )
   )
 )
@@ -126,6 +126,24 @@ server <- function(input, output) {
       write.csv(values$unemployment_data, file, row.names = FALSE)
     }
   )
+  output$provUI <- shiny::renderUI({
+    shiny::req(input$ccaa)
+    if(!is.null(input$ccaa)){
+      shiny::selectInput("prov", "Provincia", width = "200px",
+                         unemployment_data %>% 
+                           dplyr::filter(Comunidad_Autonoma == input$ccaa) %>% 
+                           dplyr::pull(Provincia) %>% unique())
+    }
+  })
+  output$muniUI <- shiny::renderUI({
+    shiny::req(input$prov)
+    if(!is.null(input$prov)){
+      shiny::selectInput("muni", "Municipio", width = "200px",
+                         unemployment_data %>%
+                           dplyr::filter(Provincia == input$prov) %>%
+                           dplyr::pull(Municipio) %>% unique())
+    }
+  })
 }
 
 # Run the application 
