@@ -35,11 +35,17 @@ ui <- shiny::fluidPage(
                                                                     width = "100%", height = "950px"))
     )
   ),
-  shiny::fluidRow(
-    shiny::tableOutput('mayor_desempleo'),
-    shiny::tableOutput('menor_desempleo'),
-    DT::DTOutput('tbl')
-  )
+  shiny::tags$hr(),
+  shiny::fluidRow( 
+    shiny::column(6, 
+                  shiny::tags$h4("Top 5 Municipios con Mayor Desempleo"),
+                  shiny::tableOutput('mayor_desempleo')),
+    shiny::column(6, 
+                  shiny::tags$h4("Top 5 Municipios con Menor Desempleo"),
+                  shiny::tableOutput('menor_desempleo'))
+  ),
+  rhandsontable::rHandsontableOutput("tabla"),
+  DT::DTOutput('tbl')
 )
 
 unemployment_path <- './unemployment_data/'
@@ -63,29 +69,41 @@ server <- function(input, output) {
       dplyr::mutate(Tasa_Desempleo_Media = mean(Tasa_Desempleo), 
                     Tasa_Desempleo_Max = max(Tasa_Desempleo)) %>% 
       dplyr::ungroup()
+    output$plot_paro_provincia <- plotly::renderPlotly({
+      plot.unemployment(new_data, values$year_, values$month_)
+    })
     output$mayor_desempleo <- shiny::renderTable(
       {new_data %>% 
           dplyr::select(Municipio, Provincia, Comunidad_Autonoma, Habitantes, Poblacion_Activa, Desempleados, Tasa_Desempleo) %>% 
           dplyr::rename("Comunidad Autonoma" = Comunidad_Autonoma, "Poblacion Activa" = Poblacion_Activa) %>%
           dplyr::top_n(5, wt = Tasa_Desempleo) %>% 
+          dplyr::slice(1:5) %>%
           dplyr::arrange(-Tasa_Desempleo)
-      }, width = '300px', rownames=F, hover = T, spacing = 'xs', digits = 2, align = 'c'
+      }, width = '100%', rownames=F, hover = F, spacing = 'xs', digits = 2, align = 'c'
     )
     output$menor_desempleo <- shiny::renderTable(
       {new_data %>% 
           dplyr::select(Municipio, Provincia, Comunidad_Autonoma, Habitantes, Poblacion_Activa, Desempleados, Tasa_Desempleo) %>% 
           dplyr::rename("Comunidad Autonoma" = Comunidad_Autonoma, "Poblacion Activa" = Poblacion_Activa) %>% 
           dplyr::top_n(5, wt = -Tasa_Desempleo) %>% 
+          dplyr::slice(1:5) %>% 
           dplyr::arrange(Tasa_Desempleo)
-      }, width = '300px', rownames=F, hover = T, spacing = 'xs', digits = 2, align = 'c'
+      }, width = '100%', rownames=F, hover = F, spacing = 'xs', digits = 2, align = 'c'
     )
-    output$plot_paro_provincia <- plotly::renderPlotly({
-      plot.unemployment(new_data, values$year_, values$month_)
-    })
     output$tbl <- DT::renderDT({
       new_data %>% 
         dplyr::select(Municipio, Provincia, Comunidad_Autonoma, Habitantes, Poblacion_Activa, Desempleados, Tasa_Desempleo) %>% 
         dplyr::rename("Comunidad Autonoma" = Comunidad_Autonoma, "Poblacion Activa" = Poblacion_Activa)
+    })
+    output$tabla <- rhandsontable::renderRHandsontable({
+      new_data %>% 
+        dplyr::select(Municipio, Provincia, Comunidad_Autonoma, Habitantes, Poblacion_Activa, Desempleados, Tasa_Desempleo) %>% 
+        dplyr::rename("Comunidad Autonoma" = Comunidad_Autonoma, "Poblacion Activa" = Poblacion_Activa) %>% 
+        dplyr::top_n(5) %>% 
+        rhandsontable::rhandsontable(readOnly = T) %>%
+        # rhandsontable::hot_table(highlightCol = TRUE, highlightRow = TRUE) %>%
+        rhandsontable::hot_cols(colWidths = 150, columnSorting = TRUE) %>%
+        rhandsontable::hot_heatmap(cols=c(7), color_scale = c('#ec2F4B', '#009FFF'))
     })
   })
   output$download <- downloadHandler(
