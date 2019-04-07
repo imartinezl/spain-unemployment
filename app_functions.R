@@ -191,3 +191,58 @@ dateRangeInput2 <- function(inputId, label, endview = "years", ...) {
   d
 }
 
+plot.sankey <- function(unemployment_data, ccaa, prov, muni, date){
+  a <- unemployment_data %>%
+    dplyr::filter(Comunidad_Autonoma == ccaa,
+                  Provincia == prov,
+                  Municipio == muni) %>%
+    dplyr::mutate(Fecha = lubridate::dmy(paste("1",month,year)))
+  if(is.null(date)){
+    a <- a %>% dplyr::slice(1)
+  }else{
+    a <- a %>% dplyr::filter(Fecha == date)
+  }
+  print(a)
+  links <- rbind(
+    c(0,1,a$Poblacion_Activa),
+    c(0,2,a$Habitantes-a$Poblacion_Activa),
+    c(1,3,a$Desempleados),
+    c(1,4,a$Poblacion_Activa-a$Desempleados)
+  ) %>% as.data.frame()
+  colnames(links) <- c("source","target","value")
+  nodes <- data.frame(name=c("Habitantes","Población Activa","Población No Activa",
+                             "Desempleados","Ocupados"))
+  plotly::plot_ly(type="sankey", orientation="h",
+                  node = list(label = nodes$name, pad = 15, thickness = 15,
+                              line = list(color = "black",width = 0.5),
+                              hoverinfo="skip"),
+                  link = list(source = links$source, target=links$target, value=links$value)
+  ) %>%
+    plotly::layout(
+      # title="a",
+      font = list(size = 10),
+      xaxis = list(showgrid = F, zeroline = F),
+      yaxis = list(showgrid = F, zeroline = F)
+    )
+}
+
+plot.timeline <- function(unemployment_data, ccaa, prov, muni){
+  unemployment_data %>% 
+    dplyr::filter(Comunidad_Autonoma == ccaa,
+                  Provincia == prov,
+                  Municipio == muni) %>%
+    dplyr::mutate(date = lubridate::dmy(paste("1",month,year)),
+                  Poblacion_No_Activa = Habitantes - Poblacion_Activa,
+                  Ocupados = Poblacion_Activa - Desempleados) %>% 
+    plotly::plot_ly(x = ~date, y = ~Poblacion_No_Activa, name="Poblacion No Activa", source = "timeline",
+                    type = 'scatter', mode = 'none', stackgroup = 'one', fillcolor = '#F5FF8D') %>% 
+    plotly::add_trace(y =~ Ocupados, name="Ocupados", fillcolor = '#50CB86') %>% 
+    plotly::add_trace(y =~ Desempleados, name="Desempleados", fillcolor = '#4C74C9') %>% 
+    plotly::layout(
+      title = '',
+      xaxis = list(title = "",showgrid = FALSE),
+      yaxis = list(title = "",showgrid = FALSE),
+      legend = list(x=0, y=0)
+    ) %>% 
+    plotly::event_register('plotly_hover')
+}
