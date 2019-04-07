@@ -18,6 +18,8 @@ ui <- shiny::fluidPage(
   shiny::tags$head(
     shiny::tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
   ),
+  
+  
   # shiny::tags$hr(),
   shiny::fluidRow(
     shiny::column(5, id = "leftColumn",
@@ -52,14 +54,21 @@ ui <- shiny::fluidPage(
   shiny::fluidRow( 
     shiny::column(12,
                   shiny::selectInput("ccaa", "Comunidad Autonoma", width = "200px",
-                                     unemployment_data$Comunidad_Autonoma %>% unique()),
+                                     unemployment_data$Comunidad_Autonoma %>% unique() %>% sort()),
                   shiny::uiOutput("provUI"),
-                  shiny::uiOutput("muniUI")
+                  shiny::uiOutput("muniUI"),
+                  shinycssloaders::withSpinner(plotly::plotlyOutput("plot_timeline",
+                                                                    width = "50%", height = "500px")),
+                  plotly::plotlyOutput("plot_sankey",
+                                       width = "50%", height = "500px"),
+                  shiny::verbatimTextOutput("selection")
+                  
                   
                   
     )
   )
 )
+last_date <- NULL
 
 server <- function(input, output) {
   
@@ -132,7 +141,7 @@ server <- function(input, output) {
       shiny::selectInput("prov", "Provincia", width = "200px",
                          unemployment_data %>% 
                            dplyr::filter(Comunidad_Autonoma == input$ccaa) %>% 
-                           dplyr::pull(Provincia) %>% unique())
+                           dplyr::pull(Provincia) %>% unique() %>% sort())
     }
   })
   output$muniUI <- shiny::renderUI({
@@ -141,7 +150,42 @@ server <- function(input, output) {
       shiny::selectInput("muni", "Municipio", width = "200px",
                          unemployment_data %>%
                            dplyr::filter(Provincia == input$prov) %>%
-                           dplyr::pull(Municipio) %>% unique())
+                           dplyr::pull(Municipio) %>% unique() %>% sort())
+    }
+  })
+  # shiny::observeEvent({
+  #   input$muni
+  # },{
+  #   output$plot_timeline <- plotly::renderPlotly({
+  #     plot.timeline(unemployment_data, input$ccaa, input$prov, input$muni)
+  #   })
+  # })
+  output$plot_timeline <- plotly::renderPlotly({
+    if(!is.null(input$muni)){
+      plot.timeline(unemployment_data, input$ccaa, input$prov, input$muni)
+    }
+  })
+      output$plot_sankey <- plotly::renderPlotly({
+        shiny::req(input$muni)
+        s <- plotly::event_data("plotly_hover")
+        if (length(s) == 0) {
+          date <- last_date
+        }else{
+          date <- as.list(s)$x
+          last_date <<- date
+        }
+        print(date)
+        plot.sankey(unemployment_data,
+                    shiny::isolate(input$ccaa),
+                    shiny::isolate(input$prov),
+                    shiny::isolate(input$muni), date)
+      })
+    
+  
+  output$selection <- shiny::renderPrint({
+    s <- plotly::event_data("plotly_hover", source = "timeline")
+    if (length(s) > 0) {
+      print(as.list(s))
     }
   })
 }
