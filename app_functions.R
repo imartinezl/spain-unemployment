@@ -202,7 +202,6 @@ plot.sankey <- function(unemployment_data, ccaa, prov, muni, date){
   }else{
     a <- a %>% dplyr::filter(Fecha == date)
   }
-  print(a)
   links <- rbind(
     c(0,1,a$Poblacion_Activa),
     c(0,2,a$Habitantes-a$Poblacion_Activa),
@@ -212,21 +211,29 @@ plot.sankey <- function(unemployment_data, ccaa, prov, muni, date){
   colnames(links) <- c("source","target","value")
   nodes <- data.frame(name=c("Habitantes","Población Activa","Población No Activa",
                              "Desempleados","Ocupados"))
+  bg_color <- "#090f28"
+  text_color <- "#e8eeff"
+  font_family <- "Roboto"
   plotly::plot_ly(type="sankey", orientation="h",
-                  node = list(label = nodes$name, pad = 15, thickness = 15,
+                  node = list(label = nodes$name, pad = 85, thickness = 15,
                               line = list(color = "black",width = 0.5),
-                              hoverinfo="skip"),
-                  link = list(source = links$source, target=links$target, value=links$value)
+                              hoverinfo="skip", color=c('#9e0031','#c64191','#087e8b','#e03616','#e09f3e')),
+                  link = list(source = links$source, target=links$target, value=links$value,
+                              color = 'rgba(255,255,255,0.7)'),
+                  textfont = list(color="#100000", size=16, family=font_family)
   ) %>%
     plotly::layout(
       # title="a",
-      font = list(size = 10),
-      xaxis = list(showgrid = F, zeroline = F),
-      yaxis = list(showgrid = F, zeroline = F)
+      font = list(size = 14, color=text_color, family=font_family),
+      paper_bgcolor = bg_color, plot_bgcolor = bg_color
     )
 }
 
 plot.timeline <- function(unemployment_data, ccaa, prov, muni){
+  bg_color <- "#090f28"
+  text_color <- "#e8eeff"
+  font_family <- "Roboto"
+  
   unemployment_data %>% 
     dplyr::filter(Comunidad_Autonoma == ccaa,
                   Provincia == prov,
@@ -235,14 +242,16 @@ plot.timeline <- function(unemployment_data, ccaa, prov, muni){
                   Poblacion_No_Activa = Habitantes - Poblacion_Activa,
                   Ocupados = Poblacion_Activa - Desempleados) %>% 
     plotly::plot_ly(x = ~date, y = ~Poblacion_No_Activa, name="Poblacion No Activa", source = "timeline",
-                    type = 'scatter', mode = 'none', stackgroup = 'one', fillcolor = '#F5FF8D') %>% 
-    plotly::add_trace(y =~ Ocupados, name="Ocupados", fillcolor = '#50CB86') %>% 
-    plotly::add_trace(y =~ Desempleados, name="Desempleados", fillcolor = '#4C74C9') %>% 
+                    type = 'scatter', mode = 'none', stackgroup = 'one', fillcolor = '#087e8b') %>% 
+    plotly::add_trace(y =~ Ocupados, name="Ocupados", fillcolor = '#e03616') %>% 
+    plotly::add_trace(y =~ Desempleados, name="Desempleados", fillcolor = '#e09f3e') %>% 
     plotly::layout(
       title = '',
-      xaxis = list(title = "",showgrid = FALSE),
-      yaxis = list(title = "",showgrid = FALSE),
-      legend = list(x=0, y=0)
-    ) %>% 
-    plotly::event_register('plotly_hover')
+      xaxis = list(title = "",showgrid = FALSE,
+                   tickfont = list(color = text_color,family=font_family,size=14)),
+      yaxis = list(title = "",showgrid = FALSE,
+                   tickfont = list(color = text_color,family=font_family,size=14)),
+      legend = list(x=0, y=0, font=list(color=text_color, family=font_family, size=14)),
+      paper_bgcolor = bg_color, plot_bgcolor = bg_color
+    )
 }
