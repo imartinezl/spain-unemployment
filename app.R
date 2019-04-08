@@ -52,19 +52,19 @@ ui <- shiny::fluidPage(
   shiny::tags$hr(),
   shiny::tags$h4("Evolucion Temporal del Desempleo"),
   shiny::fluidRow( 
-    shiny::column(12,
+    shiny::column(2,
                   shiny::selectInput("ccaa", "Comunidad Autonoma", width = "200px",
                                      unemployment_data$Comunidad_Autonoma %>% unique() %>% sort()),
                   shiny::uiOutput("provUI"),
-                  shiny::uiOutput("muniUI"),
+                  shiny::uiOutput("muniUI")
+    ),
+    shiny::column(5,
                   shinycssloaders::withSpinner(plotly::plotlyOutput("plot_timeline",
-                                                                    width = "50%", height = "500px")),
+                                                                    width = "100%", height = "500px"))
+    ),
+    shiny::column(5,
                   plotly::plotlyOutput("plot_sankey",
-                                       width = "50%", height = "500px"),
-                  shiny::verbatimTextOutput("selection")
-                  
-                  
-                  
+                                       width = "100%", height = "500px")
     )
   )
 )
@@ -153,41 +153,31 @@ server <- function(input, output) {
                            dplyr::pull(Municipio) %>% unique() %>% sort())
     }
   })
-  # shiny::observeEvent({
-  #   input$muni
-  # },{
-  #   output$plot_timeline <- plotly::renderPlotly({
-  #     plot.timeline(unemployment_data, input$ccaa, input$prov, input$muni)
-  #   })
-  # })
   output$plot_timeline <- plotly::renderPlotly({
     if(!is.null(input$muni)){
-      plot.timeline(unemployment_data, input$ccaa, input$prov, input$muni)
+      plot.timeline(unemployment_data, input$ccaa, input$prov, input$muni) %>% 
+        plotly::event_register('plotly_click')
     }
   })
-      output$plot_sankey <- plotly::renderPlotly({
-        shiny::req(input$muni)
-        s <- plotly::event_data("plotly_hover")
-        if (length(s) == 0) {
-          date <- last_date
-        }else{
-          date <- as.list(s)$x
-          last_date <<- date
-        }
-        print(date)
-        plot.sankey(unemployment_data,
-                    shiny::isolate(input$ccaa),
-                    shiny::isolate(input$prov),
-                    shiny::isolate(input$muni), date)
-      })
-    
+  last_date <- NULL
+  output$plot_sankey <- plotly::renderPlotly({
+    shiny::req(input$muni)
+    print(last_date)
+    s <- plotly::event_data("plotly_click", source = "timeline")
+    # shiny::validate(shiny::need(!is.null(s), "Hover over the time series chart to populate this heatmap"))
+    if (is.null(s)) {
+      date <- last_date
+    }else{
+      date <- as.list(s)$x
+      last_date <<- date
+    }
+    print(date)
+    plot.sankey(unemployment_data,
+                shiny::isolate(input$ccaa),
+                shiny::isolate(input$prov),
+                shiny::isolate(input$muni), date)
+  })
   
-  output$selection <- shiny::renderPrint({
-    s <- plotly::event_data("plotly_hover", source = "timeline")
-    if (length(s) > 0) {
-      print(as.list(s))
-    }
-  })
 }
 
 # Run the application 
