@@ -217,7 +217,7 @@ plot.sankey <- function(unemployment_data, ccaa, prov, muni, date){
   plotly::plot_ly(type="sankey", orientation="h",
                   node = list(label = nodes$name, pad = 85, thickness = 15,
                               line = list(color = "black",width = 0.5),
-                              hoverinfo="skip", color=c('#9e0031','#c64191','#087e8b','#e03616','#e09f3e')),
+                              hoverinfo="skip", color=c('#9e0031','#c64191','#087e8b','#e09f3e','#e03616')),
                   link = list(source = links$source, target=links$target, value=links$value,
                               color = 'rgba(255,255,255,0.7)'),
                   textfont = list(color="#100000", size=16, family=font_family)
