@@ -1,7 +1,7 @@
 *.csv
 *.xls
 *.xlsx
-*.px
 *.zip
 .Rhistory
 .RData
+rsconnect/*
