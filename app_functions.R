@@ -1,6 +1,6 @@
 
 library(dplyr)
-setwd("~/Downloads/spain-unemployment")
+# setwd("~/Downloads/spain-unemployment")
 
 fetch_url <- function(url){
   h <- curl::new_handle()
@@ -49,7 +49,7 @@ unemployment.data <- function(year_, month_, unemployment_dists){
 # unemployment_data <- unemployment.data(year_, month_, unemployment_dists)
 
 unemployment.rate.data <- function(unemployment_data, year_){
-  poblacion_activa_edades <- c("25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64")
+  poblacion_activa_edades <- c("15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64")
   padron_files <- list.files('./padron/', full.names = T)
   padron_years <- stringr::str_match(padron_files, "_(\\d+).px")[,2] %>% as.numeric()
   selected <- which.min(abs(padron_years - year_))

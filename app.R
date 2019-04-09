@@ -1,7 +1,7 @@
 
 library(shiny)
 
-setwd("~/Downloads/spain-unemployment")
+# setwd("~/Downloads/spain-unemployment")
 source('app_functions.R')
 
 min_date <- '2011-01-01'
