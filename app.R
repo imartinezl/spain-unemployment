@@ -52,17 +52,17 @@ ui <- shiny::fluidPage(
   shiny::tags$hr(),
   shiny::tags$h4("Evolucion Temporal del Desempleo"),
   shiny::fluidRow( 
-    shiny::column(2,
+    shiny::column(2,class="selects",
                   shiny::selectInput("ccaa", "Comunidad Autonoma", width = "200px",
                                      unemployment_data$Comunidad_Autonoma %>% unique() %>% sort()),
                   shiny::uiOutput("provUI"),
                   shiny::uiOutput("muniUI")
     ),
-    shiny::column(5,
+    shiny::column(7,
                   shinycssloaders::withSpinner(plotly::plotlyOutput("plot_timeline",
                                                                     width = "100%", height = "500px"))
     ),
-    shiny::column(5,
+    shiny::column(3,
                   plotly::plotlyOutput("plot_sankey",
                                        width = "100%", height = "500px")
     )
