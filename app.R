@@ -111,21 +111,6 @@ server <- function(input, output) {
           dplyr::arrange(Tasa_Desempleo)
       }, width = '100%', rownames=F, hover = F, spacing = 'xs', digits = 2, align = 'c'
     )
-    output$tbl <- DT::renderDT({
-      new_data %>% 
-        dplyr::select(Municipio, Provincia, Comunidad_Autonoma, Habitantes, Poblacion_Activa, Desempleados, Tasa_Desempleo) %>% 
-        dplyr::rename("Comunidad Autonoma" = Comunidad_Autonoma, "Poblacion Activa" = Poblacion_Activa)
-    })
-    output$tabla <- rhandsontable::renderRHandsontable({
-      new_data %>% 
-        dplyr::select(Municipio, Provincia, Comunidad_Autonoma, Habitantes, Poblacion_Activa, Desempleados, Tasa_Desempleo) %>% 
-        dplyr::rename("Comunidad Autonoma" = Comunidad_Autonoma, "Poblacion Activa" = Poblacion_Activa) %>% 
-        dplyr::top_n(5) %>% 
-        rhandsontable::rhandsontable(readOnly = T) %>%
-        # rhandsontable::hot_table(highlightCol = TRUE, highlightRow = TRUE) %>%
-        rhandsontable::hot_cols(colWidths = 150, columnSorting = TRUE) %>%
-        rhandsontable::hot_heatmap(cols=c(7), color_scale = c('#ec2F4B', '#009FFF'))
-    })
   })
   output$download <- downloadHandler(
     filename = function() {
@@ -162,7 +147,7 @@ server <- function(input, output) {
   last_date <- NULL
   output$plot_sankey <- plotly::renderPlotly({
     shiny::req(input$muni)
-    print(last_date)
+    # print(last_date)
     s <- plotly::event_data("plotly_click", source = "timeline")
     # shiny::validate(shiny::need(!is.null(s), "Hover over the time series chart to populate this heatmap"))
     if (is.null(s)) {
@@ -171,7 +156,7 @@ server <- function(input, output) {
       date <- as.list(s)$x
       last_date <<- date
     }
-    print(date)
+    # print(date)
     plot.sankey(unemployment_data,
                 shiny::isolate(input$ccaa),
                 shiny::isolate(input$prov),
